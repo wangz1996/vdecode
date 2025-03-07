@@ -49,6 +49,14 @@ private:
     float chn[NChn];
     float chnplat[NChn];
     WorkMode mode;
+    int npackages=0;
+
+    //Constants
+    static constexpr double e=1.602176634e-19;
+    static constexpr double lowgain=0.549; //ADC/fC
+    static constexpr double highgain=5.614; //ADC/fC
+    static constexpr double MIP_Edep=36.; //MeV
+    static constexpr double gain=50.;
 };
 
 #endif

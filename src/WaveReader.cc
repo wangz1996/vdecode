@@ -28,6 +28,8 @@ bool WaveReader::findHead(){
 }
 
 bool WaveReader::readWave(){
+	std::memset(chn,0,sizeof(chn));
+	std::memset(chnplat,0,sizeof(chnplat));
 	char btime[10];
 	file->rdbuf()->sgetn(btime,sizeof(btime));
 	char rest[6662];
@@ -57,6 +59,9 @@ bool WaveReader::readWave(){
 }
 
 bool WaveReader::readAmp(){
+	//124 Bytes/Package
+	std::memset(chn,0,sizeof(chn));
+	std::memset(chnplat,0,sizeof(chnplat));
 	char btime[10];
 	file->rdbuf()->sgetn(btime,sizeof(btime));
 	char rest[110];
@@ -90,12 +95,14 @@ void WaveReader::decode(const std::string& filename){
     }
     openFile(filename);
     while(!file->eof()){
+		if(npackages>170000)break;
         if(findHead()){
             if(mode == WorkMode::WAVE){
                 readWave();
             }
             else if(mode == WorkMode::AMP){
                 readAmp();
+				npackages++;
             }
             else{
                 continue;
