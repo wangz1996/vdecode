@@ -66,7 +66,7 @@ private:
     float chnplat[NChn];
     WorkMode mode;
     int npackages=0;
-    std::vector<int> CellID; // FEEID-MBID-GID-CHNID
+    std::vector<int> CellID; // CryID-FEEID-MBID-GID-CHNID
     std::vector<int> CellADC;
     std::vector<int> CellPLAT;
     int EventID=0;

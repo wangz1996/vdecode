@@ -28,10 +28,15 @@ bool WaveReader::findHead(){
 }
 
 bool WaveReader::readWave(){
-	std::memset(chn,0,sizeof(chn));
-	std::memset(chnplat,0,sizeof(chnplat));
+	if(EventCount==0){
+		CellID = std::vector<int>(0, 0);
+		CellADC = std::vector<int>(0, 0);
+		CellPLAT = std::vector<int>(0, 0);
+	}
 	char btime[10];
 	file->rdbuf()->sgetn(btime,sizeof(btime));
+	unsigned char b7 = static_cast<unsigned char>(btime[7]);
+	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4) - 4; //FEEID
 	char rest[6662];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	unsigned char b1 = static_cast<unsigned char>(rest[6660]);
@@ -39,20 +44,46 @@ bool WaveReader::readWave(){
 	if(b1==0x5a && b2==0xa5){
 		for(size_t chn_i=0;chn_i<NChn;chn_i++){
 			TString name = TString::Format("chn%d",chn_i+1);
+			float plat =0.;
+			float maxi=0.;
 			for(size_t byte_i=0;byte_i<128;byte_i++){
 				int init_pos = 256*(chn_i) + byte_i*2;
 				auto d1 = static_cast<unsigned char>(rest[init_pos]);
 				auto d2 = static_cast<unsigned char>(rest[init_pos+1]);
 				unsigned short fullvalue = (static_cast<unsigned short>(d1)<<8) | d2;
-				chn[chn_i] = chn[chn_i] > fullvalue ? chn[chn_i]:fullvalue;
+				
+				// chn[chn_i] = chn[chn_i] > fullvalue ? chn[chn_i]:fullvalue;
+				maxi = maxi > fullvalue ? maxi:fullvalue;
 				if(byte_i<16){
-                    chnplat[chn_i] += fullvalue;
+                    // chnplat[chn_i] += fullvalue;
+					plat+=fullvalue;
                 }
+
 			}
-            chnplat[chn_i] /= 16.;
-            chn[chn_i] -= chnplat[chn_i];
+            plat /= 16.;
+			std::pair<int,int> gid_cryid = std::pair<int,int>(0,0);
+			if(channelMap.count(std::pair<int,int>(FEEID,chn_i))==0){
+				// std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
+				continue;
+			}
+			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
+			// if(gid_cryid.second ==0 ){
+			// 	std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
+			// }
+			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
+			int tmp_cellid = 100000 * gid_cryid.second + 10000 * FEEID + 1000 * ( FEEID % 2 ) + 100 * (gid_cryid.first) + chn_i;
+			CellID.emplace_back(tmp_cellid);
+			CellADC.emplace_back(static_cast<int>(maxi));
+            CellPLAT.emplace_back(plat);
 		}
-		tout->Fill();
+		if(EventCount==1){
+			tout->Fill();
+			EventID++;
+			EventCount=0;
+		}
+		else{
+			EventCount++;
+		}
 		return true;
 	}
 	return false;
@@ -88,7 +119,16 @@ bool WaveReader::readAmp(){
 			auto d4 = static_cast<unsigned char>(rest[chn_i*4+3]);
 			unsigned short plat = (static_cast<unsigned short>(d1)<<8) | d2;
 			unsigned short maxi = (static_cast<unsigned short>(d3)<<8) | d4;
-			int tmp_cellid = 10000 * FEEID + 1000 * ( FEEID % 2 ) + 100 * (channelMap[std::pair<int,int>(FEEID,chn_i)].first) + chn_i;
+			std::pair<int,int> gid_cryid = std::pair<int,int>(0,0);
+			if(channelMap.count(std::pair<int,int>(FEEID,chn_i))==0){
+				std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
+				continue;
+			}
+			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
+			if(gid_cryid.second ==0 ){
+				std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
+			}
+			int tmp_cellid = gid_cryid.second * 100000 + 10000 * FEEID + 1000 * ( FEEID % 2 ) + 100 * (gid_cryid.first) + chn_i;
 			CellID.emplace_back(tmp_cellid);
 			CellADC.emplace_back(static_cast<int>(maxi));
             CellPLAT.emplace_back(plat);
