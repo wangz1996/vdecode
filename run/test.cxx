@@ -32,9 +32,9 @@ void test(const std::string& fname){
 				int cellid = id.at(i);
 				int celladc = adc.at(i);
 				int cellplat = plat.at(i);
-				int cryid = cellid/100000;
+				int cryid = cellid/100000-1;
 				int mbid = (cellid%10000)/1000;
-				// std::cout<<chnid<<std::endl;
+				//std::cout<<cryid<<std::endl;
 				if((cellid%1000)/100==1){
 					if(mbid==1){
 						umap_hmh[cryid]->Fill(celladc-cellplat);
