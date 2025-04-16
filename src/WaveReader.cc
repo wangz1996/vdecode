@@ -126,7 +126,7 @@ bool WaveReader::readAmp(){
 			}
 			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
 			if(gid_cryid.second ==0 ){
-				std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
+				// std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
 			}
 			int tmp_cellid = gid_cryid.second * 100000 + 10000 * FEEID + 1000 * ( FEEID % 2 ) + 100 * (gid_cryid.first) + chn_i;
 			CellID.emplace_back(tmp_cellid);
