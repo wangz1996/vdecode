@@ -121,8 +121,8 @@ bool WaveReader::readAmp(){
 			unsigned short maxi = (static_cast<unsigned short>(d3)<<8) | d4;
 			std::pair<int,int> gid_cryid = std::pair<int,int>(0,0);
 			if(channelMap.count(std::pair<int,int>(FEEID,chn_i))==0){
-				std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
-				continue;
+				//if(FEEID==)std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
+				//continue;
 			}
 			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
 			if(gid_cryid.second ==0 ){
@@ -142,6 +142,9 @@ bool WaveReader::readAmp(){
 			EventCount++;
 		}
 		return true;
+	}
+	else{
+		file->seekg(-120, std::ios_base::cur);
 	}
 	return false;
 }
