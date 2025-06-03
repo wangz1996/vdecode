@@ -36,7 +36,8 @@ bool WaveReader::readWave(){
 	char btime[10];
 	file->rdbuf()->sgetn(btime,sizeof(btime));
 	unsigned char b7 = static_cast<unsigned char>(btime[7]);
-	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4) - 4; //FEEID
+	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4); //FEEID
+	FEEID = FEEID > 4 ? FEEID - 4 : FEEID;
 	char rest[6662];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	unsigned char b1 = static_cast<unsigned char>(rest[6660]);
@@ -76,7 +77,7 @@ bool WaveReader::readWave(){
 			CellADC.emplace_back(static_cast<int>(maxi));
             CellPLAT.emplace_back(plat);
 		}
-		if(EventCount==1){
+		if(EventCount==3){
 			tout->Fill();
 			EventID++;
 			EventCount=0;
@@ -100,7 +101,8 @@ bool WaveReader::readAmp(){
 	char btime[10];
 	file->rdbuf()->sgetn(btime,sizeof(btime));
 	unsigned char b7 = static_cast<unsigned char>(btime[7]);
-	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4) - 4; //FEEID
+	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4); //FEEID
+	FEEID = FEEID > 4 ? FEEID - 4 : FEEID;
 	char rest[110];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	// unsigned char trigger_id = static_cast<unsigned char>(btime[104]);
@@ -121,8 +123,12 @@ bool WaveReader::readAmp(){
 			unsigned short maxi = (static_cast<unsigned short>(d3)<<8) | d4;
 			std::pair<int,int> gid_cryid = std::pair<int,int>(0,0);
 			if(channelMap.count(std::pair<int,int>(FEEID,chn_i))==0){
-				std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
-				continue;
+				if(FEEID==3 || FEEID==4){
+					if(chn_i==1 || chn_i==24){
+						continue;
+					}
+				}
+				//std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
 			}
 			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
 			if(gid_cryid.second ==0 ){
@@ -132,8 +138,17 @@ bool WaveReader::readAmp(){
 			CellID.emplace_back(tmp_cellid);
 			CellADC.emplace_back(static_cast<int>(maxi));
             CellPLAT.emplace_back(plat);
+	    	// if(FEEID==2 || FEEID==4){
+			// 	if(gid_cryid.first ==0 || 1)std::cout<<"Wrong EventNo: "<<EventID<<" cryid: "<<gid_cryid.second<<" FEE: "<<FEEID<<" plat: "<<plat<<" mb: "<<FEEID % 2<<" gid: "<<(gid_cryid.first)<<std::endl;
+			// 	//if(gid_cryid.first ==1)std::cout<<"Wrong : "<<EventID<<" : "<<FEEID<<" : "<<plat<<" "<<FEEID % 2<<" "<<(gid_cryid.first)<<std::endl;
+			// }
+			// else{
+			// 	//if(gid_cryid.first ==0)std::cout<<"Right EventNo: "<<EventID<<" cryid: "<<gid_cryid.second<<" FEE: "<<FEEID<<" plat: "<<plat<<" mb: "<<FEEID % 2<<" gid: "<<(gid_cryid.first)<<std::endl;
+			// 	//std::cout<<"Right: "<<EventID<<" : "<<FEEID<<" : "<<plat<<std::endl;
+			// }
 		}
-		if(EventCount==1){
+		if(EventCount==3){
+			//if(CellID.size()!=104 || CellADC.size()!=104)std::cout<<"Event: "<<EventID<<" CellID count: "<<CellID.size()<<" CellADC count: "<<CellADC.size()<<std::endl;
 			tout->Fill();
 			EventID++;
 			EventCount=0;
@@ -143,11 +158,54 @@ bool WaveReader::readAmp(){
 		}
 		return true;
 	}
+	else{
+		file->seekg(-120, std::ios::cur);
+	}
 	return false;
 }
-
 void WaveReader::decode(const std::string& filename){
-    getOutputName(filename);
+	if(mode == WorkMode::TEMP){this->decodeTemp(filename);}
+	else {this->decodeData(filename);}
+}
+
+void WaveReader::decodeTemp(const std::string& filename){
+	getOutputName(std::string("temp_"),filename);
+	fout = new TFile(oname.c_str(),"RECREATE");
+	tout = new TTree("tree","tree");
+	tout->Branch("TPointID",&TPointID);
+	tout->Branch("C0",&C0);
+	tout->Branch("C1",&C1);
+	tout->Branch("C2",&C2);
+	tout->Branch("T0",&T0);
+	tout->Branch("T1",&T1);
+	tout->Branch("T2",&T2);
+	tout->Branch("T3",&T3);
+	openFile(filename);
+	auto total_size = file->seekg(0, std::ios::end).tellg();
+	file->seekg(0, std::ios::beg);
+	while(!file->eof()){
+		auto current_pointer = file->tellg();
+		if(findTempHead()){
+			readTemp();
+			npackages+=0.25;
+		}
+		else{
+			std::cout<<"Return false from readTemp()"<<std::endl;
+			if(current_pointer+120 > total_size){
+				std::cout<<"Reached end of file"<<std::endl;
+				break;
+			}
+			continue;
+		}
+	}
+	std::cout<<"Total packages: "<<npackages<<std::endl;
+	fout->cd();
+	tout->Write();
+	fout->Close();
+}
+
+void WaveReader::decodeData(const std::string& filename){
+    getOutputName(std::string("result_"),filename);
     fout = new TFile(oname.c_str(),"RECREATE");
     tout = new TTree("tree","tree");
 	tout->Branch("EventID",&EventID);
@@ -157,12 +215,11 @@ void WaveReader::decode(const std::string& filename){
     openFile(filename);
     while(!file->eof()){
         if(findHead()){
-			npackages++;
             if(mode == WorkMode::WAVE){
-                readWave();
+                if(readWave())npackages+=1;
             }
             else if(mode == WorkMode::AMP){
-                readAmp();
+                if(readAmp())npackages+=1;
             }
             else{
                 continue;
@@ -183,15 +240,18 @@ void WaveReader::setMode(const std::string& mode){
     else if(mode == "amp"){
         this->mode = WorkMode::AMP;
     }
+	else if(mode == "temp"){
+		this->mode = WorkMode::TEMP;
+	}
     else{
         std::cerr<<"Unknown mode: "<<mode<<std::endl;
     }
 }
 
-void WaveReader::getOutputName(const std::string& filename){
+void WaveReader::getOutputName(const std::string& prefix,const std::string& filename){
     oname = filename.substr(filename.find_last_of("/")+1);
     oname = oname.substr(0,oname.find_last_of("."));
-    oname = "result_"+oname+".root";
+    oname = prefix+oname+".root";
 }
 
 WaveReader::~WaveReader(){

@@ -14,8 +14,16 @@
 
 enum class WorkMode{
     WAVE,
-    AMP
+    AMP,
+    TEMP
 };
+
+// class CTData {
+// public:
+//   std::vector<std::vector<float>> ct_array;
+
+//   CTData() {}
+// };
 
 struct PairHash {
     template <class T1, class T2>
@@ -41,6 +49,8 @@ static WaveReader& getInstance() {
     WaveReader& operator=(const WaveReader&) = delete;
     //Decode
     void decode(const std::string& filename);
+    void decodeData(const std::string& filename);
+    void decodeTemp(const std::string& filename);
     void setMode(const std::string& mode);
 private:
     // 私有构造函数，防止外部实例化
@@ -48,12 +58,14 @@ private:
     ~WaveReader();
     //Find head
     bool findHead();
+    bool findTempHead();
     bool readWave();
     bool readAmp();
+    bool readTemp();
     //Read file
     bool openFile(const std::string& filename);
     //Get output name
-    void getOutputName(const std::string& filename);
+    void getOutputName(const std::string& prefix,const std::string& filename);
     //Input file and output TFile and TTree
     std::ifstream *file;
     TFile *fout;
@@ -65,12 +77,32 @@ private:
     float chn[NChn];
     float chnplat[NChn];
     WorkMode mode;
-    int npackages=0;
+    float npackages=0.;
     std::vector<int> CellID; // CryID-FEEID-MBID-GID-CHNID
     std::vector<int> CellADC;
     std::vector<int> CellPLAT;
     int EventID=0;
     int EventCount=0;
+
+    //Temperature Current Data
+    int TPointID=0;
+    static constexpr int NFEE = 4;
+    int FEEID=-1;
+    // float C[4][3];
+    // float T[4][4];
+    std::vector<float> C0;
+    std::vector<float> C1;
+    std::vector<float> C2;
+    std::vector<float> T0;
+    std::vector<float> T1;
+    std::vector<float> T2;
+    std::vector<float> T3;
+    // std::vector<std::vector<float>> T;
+    // std::vector<std::vector<float>> C;
+    // CTData T;
+    // CTData C;
+    //Clear function
+    void clear();
 
     //Constants
     static constexpr double e=1.602176634e-19;
