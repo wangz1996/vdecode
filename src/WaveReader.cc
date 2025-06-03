@@ -123,17 +123,11 @@ bool WaveReader::readAmp(){
 			unsigned short maxi = (static_cast<unsigned short>(d3)<<8) | d4;
 			std::pair<int,int> gid_cryid = std::pair<int,int>(0,0);
 			if(channelMap.count(std::pair<int,int>(FEEID,chn_i))==0){
-<<<<<<< HEAD
 				if(FEEID==3 || FEEID==4){
 					if(chn_i==1 || chn_i==24){
 						continue;
 					}
 				}
-				//std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
-=======
-				//if(FEEID==)std::cerr<<"No channel map for FEEID: "<<FEEID<<" chn: "<<chn_i<<std::endl;
-				//continue;
->>>>>>> 50d385c36e03d4824871cbe39516d786f17f9cb0
 			}
 			gid_cryid = channelMap[std::pair<int,int>(FEEID,chn_i)];
 			if(gid_cryid.second ==0 ){
