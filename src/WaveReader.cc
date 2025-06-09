@@ -20,6 +20,7 @@ bool WaveReader::findHead(){
 			unsigned char b2 = static_cast<unsigned char>(buffer2[1]);
 			unsigned char b3 = static_cast<unsigned char>(buffer2[2]);
 			if(b1 == 0xaa && b2 == 0xeb && b3 == 0x90){
+				nhead++;
 				return true;
 			}
 		}
@@ -215,10 +216,10 @@ void WaveReader::decodeData(const std::string& filename){
     while(!file->eof()){
         if(findHead()){
             if(mode == WorkMode::WAVE){
-                if(readWave())npackages+=1;
+                if(readWave())npackages+=0.25;
             }
             else if(mode == WorkMode::AMP){
-                if(readAmp())npackages+=1;
+                if(readAmp())npackages+=0.25;
             }
             else{
                 continue;
@@ -226,6 +227,7 @@ void WaveReader::decodeData(const std::string& filename){
         }
         else{break;}
     }
+	std::cout<<"Total head: "<<nhead<<std::endl;
 	std::cout<<"Total packages: "<<npackages<<std::endl;
     fout->cd();
     tout->Write();
