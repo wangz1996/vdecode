@@ -23,6 +23,9 @@ bool WaveReader::findHead(){
 				nhead++;
 				return true;
 			}
+			else{
+				file->seekg(-3,std::ios::cur); // Not a scientific data head, seek back
+			}
 		}
 	}
 	return false;
