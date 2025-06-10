@@ -15,7 +15,8 @@
 enum class WorkMode{
     WAVE,
     AMP,
-    TEMP
+    TEMP,
+    MIX
 };
 
 // class CTData {
@@ -51,6 +52,7 @@ static WaveReader& getInstance() {
     void decode(const std::string& filename);
     void decodeData(const std::string& filename);
     void decodeTemp(const std::string& filename);
+    void decodeMix(const std::string& filename);
     void setMode(const std::string& mode);
 private:
     // 私有构造函数，防止外部实例化
@@ -59,9 +61,11 @@ private:
     //Find head
     bool findHead();
     bool findTempHead();
+    int findMixHead(); // return 0 for scientific, 1 for temperature
     bool readWave();
     bool readAmp();
     bool readTemp();
+    bool readMixTemp();
     //Read file
     bool openFile(const std::string& filename);
     //Get output name
@@ -82,13 +86,18 @@ private:
     std::vector<int> CellID; // CryID-FEEID-MBID-GID-CHNID
     std::vector<int> CellADC;
     std::vector<int> CellPLAT;
+    float MixTemperature; // Temperature for MixReader
+    float MixCurrent; // Current for MixReader
     int EventID=0;
     int EventCount=0;
+    int MixTempEventCount=0;
+    int MixTime;
 
     //Temperature Current Data
     int TPointID=0;
     static constexpr int NFEE = 4;
     int FEEID=-1;
+    int MixFEEID=-1;
     // float C[4][3];
     // float T[4][4];
     std::vector<float> C0;

@@ -138,17 +138,8 @@ bool WaveReader::readAmp(){
 			CellID.emplace_back(tmp_cellid);
 			CellADC.emplace_back(static_cast<int>(maxi));
             CellPLAT.emplace_back(plat);
-	    	// if(FEEID==2 || FEEID==4){
-			// 	if(gid_cryid.first ==0 || 1)std::cout<<"Wrong EventNo: "<<EventID<<" cryid: "<<gid_cryid.second<<" FEE: "<<FEEID<<" plat: "<<plat<<" mb: "<<FEEID % 2<<" gid: "<<(gid_cryid.first)<<std::endl;
-			// 	//if(gid_cryid.first ==1)std::cout<<"Wrong : "<<EventID<<" : "<<FEEID<<" : "<<plat<<" "<<FEEID % 2<<" "<<(gid_cryid.first)<<std::endl;
-			// }
-			// else{
-			// 	//if(gid_cryid.first ==0)std::cout<<"Right EventNo: "<<EventID<<" cryid: "<<gid_cryid.second<<" FEE: "<<FEEID<<" plat: "<<plat<<" mb: "<<FEEID % 2<<" gid: "<<(gid_cryid.first)<<std::endl;
-			// 	//std::cout<<"Right: "<<EventID<<" : "<<FEEID<<" : "<<plat<<std::endl;
-			// }
 		}
 		if(EventCount==3){
-			//if(CellID.size()!=104 || CellADC.size()!=104)std::cout<<"Event: "<<EventID<<" CellID count: "<<CellID.size()<<" CellADC count: "<<CellADC.size()<<std::endl;
 			tout->Fill();
 			EventID++;
 			EventCount=0;
@@ -165,6 +156,7 @@ bool WaveReader::readAmp(){
 }
 void WaveReader::decode(const std::string& filename){
 	if(mode == WorkMode::TEMP){this->decodeTemp(filename);}
+	else if(mode == WorkMode::MIX){this->decodeMix(filename);}
 	else {this->decodeData(filename);}
 }
 
@@ -243,6 +235,9 @@ void WaveReader::setMode(const std::string& mode){
     }
 	else if(mode == "temp"){
 		this->mode = WorkMode::TEMP;
+	}
+	else if(mode == "mix"){
+		this->mode = WorkMode::MIX;
 	}
     else{
         std::cerr<<"Unknown mode: "<<mode<<std::endl;
