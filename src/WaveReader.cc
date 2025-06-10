@@ -108,9 +108,9 @@ bool WaveReader::readAmp(){
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	// unsigned char trigger_id = static_cast<unsigned char>(btime[104]);
 	// unsigned char trigger_id2 = static_cast<unsigned char>(btime[105]);
-	//concat lower part of id with all id2
+	// //concat lower part of id with all id2
 	// unsigned int triggerid = static_cast<int>((trigger_id & 0x0F) << 8 | trigger_id2);
-	//Print trigger id in binary format
+	// //Print trigger id in binary format
 	// std::cout<<"triggerid: "<<triggerid<<" "<<std::bitset<16>(triggerid)<<std::endl;
 	unsigned char b1 = static_cast<unsigned char>(rest[108]);
 	unsigned char b2 = static_cast<unsigned char>(rest[109]);
