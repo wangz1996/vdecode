@@ -1,6 +1,18 @@
 #include "WaveReader.hh"
 
 bool WaveReader::openFile(const std::string& filename){
+	std::string filename_last = filename;
+	filename_last = filename_last.substr(filename_last.find_last_of("/")+1);
+	if(filename_last.find("Calo")!=std::string::npos){
+		std::cout<<"Calo"<<std::endl;
+		dettype = DetType::CALO;
+	}
+	else if(filename_last.find("CsITK")!=std::string::npos){
+		dettype = DetType::ITK;
+	}
+	else{
+		dettype = DetType::CALO;
+	}
     file = new std::ifstream(filename,std::ios::binary);
     if (!file->is_open()) {
         std::cerr << "Can not open file: "<<filename << std::endl;
@@ -142,13 +154,21 @@ bool WaveReader::readAmp(){
 			CellADC.emplace_back(static_cast<int>(maxi));
             CellPLAT.emplace_back(plat);
 		}
-		if(EventCount==3){
+		if(dettype == DetType::ITK){
 			tout->Fill();
 			EventID++;
-			EventCount=0;
+		} else if (dettype == DetType::CALO){
+			if(EventCount==3){
+				tout->Fill();
+				EventID++;
+				EventCount=0;
+			}
+			else{
+				EventCount++;
+			}
 		}
 		else{
-			EventCount++;
+			std::cerr<<"Unknown detector type"<<std::endl;
 		}
 		return true;
 	}
@@ -214,7 +234,14 @@ void WaveReader::decodeData(const std::string& filename){
                 if(readWave())npackages+=0.25;
             }
             else if(mode == WorkMode::AMP){
-                if(readAmp())npackages+=0.25;
+                if(readAmp()){
+					if(dettype == DetType::ITK){
+						npackages+=1;
+					}
+					else if(dettype == DetType::CALO){
+						npackages+=0.25;
+					}
+				}
             }
             else{
                 continue;

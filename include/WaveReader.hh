@@ -19,6 +19,10 @@ enum class WorkMode{
     MIX
 };
 
+enum class DetType{
+    CALO,
+    ITK
+};
 // class CTData {
 // public:
 //   std::vector<std::vector<float>> ct_array;
@@ -81,6 +85,7 @@ private:
     float chn[NChn];
     float chnplat[NChn];
     WorkMode mode;
+    DetType dettype;
     float npackages=0.;
     int nhead=0;
     std::vector<int> CellID; // CryID-FEEID-MBID-GID-CHNID
