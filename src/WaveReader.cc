@@ -31,7 +31,7 @@ bool WaveReader::findHead(){
 			unsigned char b1 = static_cast<unsigned char>(buffer2[0]);
 			unsigned char b2 = static_cast<unsigned char>(buffer2[1]);
 			unsigned char b3 = static_cast<unsigned char>(buffer2[2]);
-			if(b1 == 0xaa && b2 == 0xeb && b3 == 0x90){
+			if(b1 == 0xAA && b2 == 0xeb && b3 == 0x90){
 				nhead++;
 				return true;
 			}
@@ -114,12 +114,12 @@ bool WaveReader::readAmp(){
 		CellPLAT = std::vector<int>(0, 0);
 	}
 
-	char btime[10];
+	char btime[12];
 	file->rdbuf()->sgetn(btime,sizeof(btime));
-	unsigned char b7 = static_cast<unsigned char>(btime[7]);
+	unsigned char b7 = static_cast<unsigned char>(btime[11]);
 	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4); //FEEID
 	FEEID = FEEID > 4 ? FEEID - 4 : FEEID;
-	char rest[110];
+	char rest[112];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	// unsigned char trigger_id = static_cast<unsigned char>(btime[104]);
 	// unsigned char trigger_id2 = static_cast<unsigned char>(btime[105]);
@@ -127,9 +127,9 @@ bool WaveReader::readAmp(){
 	// unsigned int triggerid = static_cast<int>((trigger_id & 0x0F) << 8 | trigger_id2);
 	// //Print trigger id in binary format
 	// std::cout<<"triggerid: "<<triggerid<<" "<<std::bitset<16>(triggerid)<<std::endl;
-	unsigned char b1 = static_cast<unsigned char>(rest[108]);
-	unsigned char b2 = static_cast<unsigned char>(rest[109]);
-	if(b1==0x5a && b2==0xa5){
+	unsigned char b1 = static_cast<unsigned char>(rest[110]);
+	unsigned char b2 = static_cast<unsigned char>(rest[111]);
+	if(b1==0x5A && b2==0xA5){
 		for(size_t chn_i=0;chn_i<NChn;chn_i++){
 			auto d1 = static_cast<unsigned char>(rest[chn_i*4]);
 			auto d2 = static_cast<unsigned char>(rest[chn_i*4+1]);
