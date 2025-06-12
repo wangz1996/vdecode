@@ -173,7 +173,7 @@ bool WaveReader::readAmp(){
 		return true;
 	}
 	else{
-		file->seekg(-120, std::ios_base::cur);
+		file->seekg(-124, std::ios_base::cur);
 	}
 	return false;
 }
