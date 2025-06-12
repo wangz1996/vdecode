@@ -25,18 +25,16 @@ bool WaveReader::findHead(){
 	char buffer[1];
 	while(file->rdbuf()->sgetn(buffer,sizeof(buffer))>0){
 		unsigned char byte = static_cast<unsigned char>(buffer[0]);
-		if(byte == 0x55){
-			char buffer2[3];
+		if(byte == 0xeb){
+			char buffer2[1];
 			file->rdbuf()->sgetn(buffer2,sizeof(buffer2));
 			unsigned char b1 = static_cast<unsigned char>(buffer2[0]);
-			unsigned char b2 = static_cast<unsigned char>(buffer2[1]);
-			unsigned char b3 = static_cast<unsigned char>(buffer2[2]);
-			if(b1 == 0xAA && b2 == 0xeb && b3 == 0x90){
+			if(b1 == 0x90){
 				nhead++;
 				return true;
 			}
 			else{
-				file->seekg(-3,std::ios::cur); // Not a scientific data head, seek back
+				file->seekg(-1,std::ios::cur); // Not a scientific data head, seek back
 			}
 		}
 	}
@@ -119,7 +117,7 @@ bool WaveReader::readAmp(){
 	unsigned char b7 = static_cast<unsigned char>(btime[11]);
 	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4); //FEEID
 	FEEID = FEEID > 4 ? FEEID - 4 : FEEID;
-	char rest[112];
+	char rest[110];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	// unsigned char trigger_id = static_cast<unsigned char>(btime[104]);
 	// unsigned char trigger_id2 = static_cast<unsigned char>(btime[105]);
@@ -127,9 +125,9 @@ bool WaveReader::readAmp(){
 	// unsigned int triggerid = static_cast<int>((trigger_id & 0x0F) << 8 | trigger_id2);
 	// //Print trigger id in binary format
 	// std::cout<<"triggerid: "<<triggerid<<" "<<std::bitset<16>(triggerid)<<std::endl;
-	unsigned char b1 = static_cast<unsigned char>(rest[110]);
-	unsigned char b2 = static_cast<unsigned char>(rest[111]);
-	if(b1==0x5A && b2==0xA5){
+	// unsigned char b1 = static_cast<unsigned char>(rest[110]);
+	// unsigned char b2 = static_cast<unsigned char>(rest[111]);
+	if(1){
 		for(size_t chn_i=0;chn_i<NChn;chn_i++){
 			auto d1 = static_cast<unsigned char>(rest[chn_i*4]);
 			auto d2 = static_cast<unsigned char>(rest[chn_i*4+1]);
