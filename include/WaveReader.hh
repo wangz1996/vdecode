@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 #include <cstring>
+#include <set>
 #include <bitset>
 #include <unordered_map>
 #include "TH1D.h"
@@ -70,6 +71,7 @@ private:
     bool readAmp();
     bool readTemp();
     bool readMixTemp();
+    void ampClear();
     //Read file
     bool openFile(const std::string& filename);
     //Get output name
@@ -88,6 +90,7 @@ private:
     DetType dettype;
     float npackages=0.;
     int nhead=0;
+    int nevents_skipped=0;
     std::vector<int> CellID; // CryID-FEEID-MBID-GID-CHNID
     std::vector<int> CellADC;
     std::vector<int> CellPLAT;
@@ -97,6 +100,7 @@ private:
     int EventCount=0;
     int MixTempEventCount=0;
     int MixTime;
+    std::set<int> set_FEEID;
 
     //Temperature Current Data
     int TPointID=0;

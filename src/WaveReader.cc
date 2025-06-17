@@ -106,12 +106,18 @@ bool WaveReader::readWave(){
 	return false;
 }
 
+void WaveReader::ampClear(){
+	CellID = std::vector<int>(0, 0);
+	CellADC = std::vector<int>(0, 0);
+	CellPLAT = std::vector<int>(0, 0);
+	set_FEEID.clear();
+	EventCount=0;
+}
+
 bool WaveReader::readAmp(){
 	//124 Bytes/Package
 	if(EventCount==0){
-		CellID = std::vector<int>(0, 0);
-		CellADC = std::vector<int>(0, 0);
-		CellPLAT = std::vector<int>(0, 0);
+		ampClear();
 	}
 
 	char btime[10];
@@ -119,6 +125,12 @@ bool WaveReader::readAmp(){
 	unsigned char b7 = static_cast<unsigned char>(btime[7]);
 	unsigned int FEEID = static_cast<int>((b7 & 0xF0) >> 4); //FEEID
 	FEEID = FEEID > 4 ? FEEID - 4 : FEEID;
+	if(set_FEEID.count(FEEID)!=0){
+		std::cout<<"Repeated FEEID "<<FEEID<<" at Event: "<<EventID<<" skipping..."<<std::endl;
+		nevents_skipped++;
+		ampClear();
+	}
+	set_FEEID.insert(FEEID);
 	char rest[110];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
 	// unsigned char trigger_id = static_cast<unsigned char>(btime[104]);
@@ -130,6 +142,7 @@ bool WaveReader::readAmp(){
 	unsigned char b1 = static_cast<unsigned char>(rest[108]);
 	unsigned char b2 = static_cast<unsigned char>(rest[109]);
 	if(b1==0x5a && b2==0xa5){
+		EventCount++;
 		for(size_t chn_i=0;chn_i<NChn;chn_i++){
 			auto d1 = static_cast<unsigned char>(rest[chn_i*4]);
 			auto d2 = static_cast<unsigned char>(rest[chn_i*4+1]);
@@ -157,14 +170,18 @@ bool WaveReader::readAmp(){
 		if(dettype == DetType::ITK){
 			tout->Fill();
 			EventID++;
+			ampClear();
 		} else if (dettype == DetType::CALO){
-			if(EventCount==3){
-				tout->Fill();
-				EventID++;
-				EventCount=0;
+			if(EventCount==4){
+				if(set_FEEID.size()==4){
+					// std::cout<<"Event: "<<EventID<<" filled "<<std::endl;
+					tout->Fill();
+					EventID++;
+					ampClear();
+				}
 			}
 			else{
-				EventCount++;
+			
 			}
 		}
 		else{
@@ -173,6 +190,7 @@ bool WaveReader::readAmp(){
 		return true;
 	}
 	else{
+		std::cout<<"Wrong package end at event : "<<EventID<<" back head finding..."<<std::endl;
 		file->seekg(-120, std::ios_base::cur);
 	}
 	return false;
@@ -250,7 +268,9 @@ void WaveReader::decodeData(const std::string& filename){
         else{break;}
     }
 	std::cout<<"Total head: "<<nhead<<std::endl;
-	std::cout<<"Total packages: "<<npackages<<std::endl;
+	std::cout<<"Expected number of events: "<<nhead/4.<<std::endl;
+	std::cout<<"Skipped events: "<<nevents_skipped<<std::endl;
+	std::cout<<"Total events : "<<EventID<<std::endl;
     fout->cd();
     tout->Write();
     fout->Close();
