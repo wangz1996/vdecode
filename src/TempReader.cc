@@ -47,7 +47,7 @@ bool WaveReader::readTemp(){
 	//Start to read
 	char rest[14];
 	file->rdbuf()->sgetn(rest,sizeof(rest));
-	auto f_current = [rest](const int& i){
+	auto f_current = [this,rest](const int& i){
 		int index = i*2;
 		float cif=-1.;
 		auto ci0 = static_cast<unsigned char>(rest[index]);
@@ -55,15 +55,24 @@ bool WaveReader::readTemp(){
 		unsigned short ci = (static_cast<unsigned short>(ci0 & 0x0F) << 8) | ci1;
 		if(i==0){
 			cif = (ci*2500./4096.-245.1)/20./0.01;
+			if(dettype == DetType::ITK) cif/=4.;
 		}
 		else{
-			cif = (ci*2500./4096.-245.1)/20./0.25;
+			cif = (ci*2500./4096.-245.1)/20./0.125;
 		}
 		return cif;
 	};
 	C0[FEEID-1] = f_current(0);
 	C1[FEEID-1] = f_current(1);
 	C2[FEEID-1] = f_current(2);
+	if(dettype == DetType::ITK && FEEID==2){
+		C1[1]/=2.;
+		C2[1]/=2.;
+	}
+	else if(dettype == DetType::CALO){
+		if(FEEID==3)C1[2]/=2.;
+		if(FEEID==4)C1[3]/=2.;
+	}
 	//Temperature
 	auto f_temperature = [rest](const int& i){
 		int index = 6 + i*2;
